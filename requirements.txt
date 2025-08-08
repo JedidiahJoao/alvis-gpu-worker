@@ -1,0 +1,6 @@
+# gpu-worker/requirements.txt
+runpod
+faster-whisper
+yt-dlp
+pydub
+torch
