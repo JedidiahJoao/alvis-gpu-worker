@@ -1,29 +1,32 @@
-# UPDATED: Use a newer CUDA base image to match PyTorch version requirements
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+# gpu-worker/Dockerfile
 
+# FINAL: Use a stable, pre-configured base image from RunPod
+# This image includes Python, PyTorch, and all the correct NVIDIA drivers
+FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+
+# Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-# Set a specific location for model files so they are cached
 ENV XDG_CACHE_HOME=/root/.cache
 
-# Install system dependencies
+# Install system dependencies that are not in the base image
 RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3-pip \
     ffmpeg \
     git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+# Copy and install our smaller requirements list
 COPY requirements.txt .
-# Use python3.10 explicitly to match the system install
-RUN python3.10 -m pip install --no-cache-dir -r requirements.txt
-RUN python3.10 -m pip install --upgrade yt-dlp
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade yt-dlp
 
 # Pre-download the Whisper model during the build
-RUN python3.10 -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cuda', compute_type='float16', download_root='/root/.cache')"
+RUN python3 -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cuda', compute_type='float16', download_root='/root/.cache')"
 
+# Copy our worker code
 COPY worker.py .
 
-CMD ["python3.10", "-u", "worker.py"]
+# Command to start the worker
+CMD ["python3", "-u", "worker.py"]

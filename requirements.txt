@@ -3,4 +3,3 @@ runpod
 faster-whisper
 yt-dlp
 pydub
-torch
