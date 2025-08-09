@@ -18,10 +18,13 @@ WORKDIR /app
 # Copy and install our smaller requirements list
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --upgrade yt-dlp
+# Note: yt-dlp is already in requirements, this second install is redundant but harmless.
+# We can clean it up later.
 
-# Pre-download the Whisper model during the build
-RUN python3 -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cuda', compute_type='float16', download_root='/root/.cache')"
+# --- THE FIX ---
+# Pre-download the model files from Hugging Face without loading them into a GPU.
+# This is a simple file download operation that works on any machine.
+RUN python3 -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Systran/faster-whisper-small', cache_dir='/root/.cache')"
 
 # Copy our worker code
 COPY worker.py .
