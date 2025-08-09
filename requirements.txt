@@ -4,5 +4,6 @@ runpod
 insanely-fast-whisper
 torch
 optimum
+transformers
 yt-dlp
 pydub

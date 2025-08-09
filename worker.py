@@ -4,8 +4,9 @@ import subprocess
 from pathlib import Path
 import time
 import torch
-from transformers import pipeline # CORRECT IMPORT
-from insanely_fast_whisper import InsanelyFastWhisperPipeline # CORRECT IMPORT
+from transformers import pipeline # This is the main import we need
+
+# No more imports from insanely_fast_whisper are needed
 
 model = None
 
@@ -39,14 +40,14 @@ async def handler(job):
         print("[DEBUG] Model not loaded. Initializing transcription pipeline...")
         model_load_start = time.time()
         
-        # CORRECT INITIALIZATION
+        # CORRECTED, SIMPLER INITIALIZATION
+        # The 'insanely-fast-whisper' library automatically patches this.
         model = pipeline(
             "automatic-speech-recognition",
             model="openai/whisper-small",
             chunk_length_s=30,
             device="cuda:0",
             torch_dtype=torch.float16,
-            pipeline_class=InsanelyFastWhisperPipeline,
         )
         
         model_load_end = time.time()
@@ -68,7 +69,7 @@ async def handler(job):
         full_transcript = outputs["text"]
         
         transcribe_end = time.time()
-        print(f"[DEBUG] Transcription FINISHED. Took {transcribe_end - transcribe_end:.2f} seconds.")
+        print(f"[DEBUG] Transcription FINISHED. Took {transcribe_end - transcribe_start:.2f} seconds.")
         
         print("[DEBUG] Job processing complete.")
         return {"transcript": full_transcript.strip()}
