@@ -1,6 +1,8 @@
 # gpu-worker/requirements.txt
-# Use a newer faster-whisper and let it select the correct ctranslate2
+# Switching to a more compatible transcription library
 runpod
-faster-whisper==1.2.0
+insanely-fast-whisper
+torch
+optimum
 yt-dlp
 pydub

@@ -1,9 +1,10 @@
 import runpod
-from faster_whisper import WhisperModel
 import tempfile
 import subprocess
 from pathlib import Path
 import time
+import torch
+from insanely_fast_whisper import whisper_pipeline
 
 model = None
 
@@ -34,11 +35,16 @@ async def handler(job):
     print("[DEBUG] Handler started for a new job.")
 
     if model is None:
-        print("[DEBUG] Model not loaded. Loading Whisper model from cache...")
+        print("[DEBUG] Model not loaded. Initializing transcription pipeline...")
         model_load_start = time.time()
-        model = WhisperModel("small", device="cuda", compute_type="float16", download_root="/root/.cache")
+        # Initialize the new pipeline for CUDA
+        model = whisper_pipeline(
+            "openai/whisper-small",
+            device="cuda:0",
+            torch_dtype=torch.float16,
+        )
         model_load_end = time.time()
-        print(f"[DEBUG] Whisper model loaded successfully. Took {model_load_end - model_load_start:.2f} seconds.")
+        print(f"[DEBUG] Transcription pipeline loaded successfully. Took {model_load_end - model_load_start:.2f} seconds.")
 
     job_input = job.get('input', {})
     audio_url = job_input.get('audio_url')
@@ -47,17 +53,17 @@ async def handler(job):
         return {"error": "Missing 'audio_url' in input"}
 
     try:
-        # Step 1: Download
         audio_path = download_audio(audio_url)
         
-        # Step 2: Transcribe
         print(f"[DEBUG] Starting transcription for: {audio_path}")
         transcribe_start = time.time()
-        segments, _ = model.transcribe(audio_path, beam_size=5, language="en")
+        
+        # Transcribe using the new model's syntax
+        outputs = model(audio_path)
+        full_transcript = outputs["text"]
+        
         transcribe_end = time.time()
         print(f"[DEBUG] Transcription FINISHED. Took {transcribe_end - transcribe_start:.2f} seconds.")
-
-        full_transcript = "".join(segment.text for segment in segments)
         
         print("[DEBUG] Job processing complete.")
         return {"transcript": full_transcript.strip()}
