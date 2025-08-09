@@ -4,7 +4,8 @@ import subprocess
 from pathlib import Path
 import time
 import torch
-from insanely_fast_whisper import whisper_pipeline
+from transformers import pipeline # CORRECT IMPORT
+from insanely_fast_whisper import InsanelyFastWhisperPipeline # CORRECT IMPORT
 
 model = None
 
@@ -37,12 +38,17 @@ async def handler(job):
     if model is None:
         print("[DEBUG] Model not loaded. Initializing transcription pipeline...")
         model_load_start = time.time()
-        # Initialize the new pipeline for CUDA
-        model = whisper_pipeline(
-            "openai/whisper-small",
+        
+        # CORRECT INITIALIZATION
+        model = pipeline(
+            "automatic-speech-recognition",
+            model="openai/whisper-small",
+            chunk_length_s=30,
             device="cuda:0",
             torch_dtype=torch.float16,
+            pipeline_class=InsanelyFastWhisperPipeline,
         )
+        
         model_load_end = time.time()
         print(f"[DEBUG] Transcription pipeline loaded successfully. Took {model_load_end - model_load_start:.2f} seconds.")
 
@@ -58,12 +64,11 @@ async def handler(job):
         print(f"[DEBUG] Starting transcription for: {audio_path}")
         transcribe_start = time.time()
         
-        # Transcribe using the new model's syntax
-        outputs = model(audio_path)
+        outputs = model(audio_path, batch_size=8)
         full_transcript = outputs["text"]
         
         transcribe_end = time.time()
-        print(f"[DEBUG] Transcription FINISHED. Took {transcribe_end - transcribe_start:.2f} seconds.")
+        print(f"[DEBUG] Transcription FINISHED. Took {transcribe_end - transcribe_end:.2f} seconds.")
         
         print("[DEBUG] Job processing complete.")
         return {"transcript": full_transcript.strip()}
