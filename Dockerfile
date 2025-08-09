@@ -1,6 +1,6 @@
 # FINAL: Use a stable, pre-configured base image from RunPod
 # This image includes Python, PyTorch, and all the correct NVIDIA drivers
-FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-runtime-ubuntu22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
