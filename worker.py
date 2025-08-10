@@ -17,15 +17,23 @@ def download_audio(url):
     print(f"[DEBUG] Starting audio download for URL: {url}")
     start_time = time.time()
     
+    # A more robust command: request best available audio, but if it fails, 
+    # fall back to the best available format that contains audio.
     command = [
-        "yt-dlp", "-f", "bestaudio", "--extract-audio",
-        "--audio-format", "mp3", "-o", str(temp_path), url
+        "yt-dlp",
+        "-f", "bestaudio/best",  # Try for best audio, but accept best overall if it's the only option
+        "--extract-audio",
+        "--audio-format", "mp3",
+        "-o", str(temp_path),
+        url
     ]
     
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"yt-dlp failed: {e.stderr.strip()}")
+        # Include stdout in the error as it often contains useful warnings
+        error_message = f"yt-dlp failed: {e.stderr.strip()} | stdout: {e.stdout.strip()}"
+        raise RuntimeError(error_message)
 
     end_time = time.time()
     print(f"[DEBUG] Audio download FINISHED. Took {end_time - start_time:.2f} seconds.")
