@@ -6,6 +6,8 @@ import time
 import torch
 from transformers import pipeline
 from datetime import timedelta
+import uuid
+import os
 
 # No more imports from insanely_fast_whisper are needed directly
 
